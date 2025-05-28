@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../utils/app_colors.dart';
+import '../utils/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,45 +31,51 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Custom Header/AppBar
+          // Header
           _buildHeader(isMobile),
-          // Scrollable Content
+
+          // Scrollable content
           Expanded(
             child: SingleChildScrollView(
               controller: _scrollController,
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 20 : 100,
-                  vertical: 10,
-                ),
-                child: Column(
-                  children: [
-                    // Home Section
-                    Container(
-                      key: _homeKey,
-                      child: const HeroSection(),
+              child: Column(
+                children: [
+                  // Home Section
+                  Container(
+                    key: _homeKey,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 100,
+                      vertical: 40,
                     ),
-                    const SizedBox(height: 80),
+                    child: const HeroSection(),
+                  ),
 
-                    // Projects Section
-                    Container(
-                      key: _projectsKey,
-                      child: const WorkSection(),
+                  // Projects Section
+                  Container(
+                    key: _projectsKey,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 100,
+                      vertical: 40,
                     ),
-                    const SizedBox(height: 80),
+                    child: const WorkSection(),
+                  ),
 
-                    // Contacts Section
-                    Container(
-                      key: _contactsKey,
-                      child: const ContactSection(),
+                  // Contacts Section
+                  Container(
+                    key: _contactsKey,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 100,
+                      vertical: 40,
                     ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+                    child: const ContactSection(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -75,16 +85,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(bool isMobile) {
+    final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 100,
         vertical: 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: theme.shadowColor.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -99,7 +111,7 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(
               fontSize: isMobile ? 18 : 24,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
 
@@ -118,58 +130,79 @@ class _HomePageState extends State<HomePage> {
         _buildNavItem("Projects", () => _scrollToSection(_projectsKey)),
         const SizedBox(width: 32),
         _buildNavItem("Contacts", () => _scrollToSection(_contactsKey)),
+        const SizedBox(width: 32),
+        _buildThemeToggle(),
       ],
     );
   }
 
   Widget _buildMobileMenu() {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.menu, color: Colors.black87),
-      onSelected: (String value) {
-        switch (value) {
-          case 'Home':
-            _scrollToSection(_homeKey);
-            break;
-          case 'Projects':
-            _scrollToSection(_projectsKey);
-            break;
-          case 'Contacts':
-            _scrollToSection(_contactsKey);
-            break;
-        }
-      },
-      itemBuilder: (BuildContext context) => [
-        const PopupMenuItem<String>(
-          value: 'Home',
-          child: Text('Home'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'Projects',
-          child: Text('Projects'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'Contacts',
-          child: Text('Contacts'),
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildThemeToggle(),
+        const SizedBox(width: 16),
+        PopupMenuButton<String>(
+          icon: Icon(Icons.menu, color: theme.textTheme.bodyLarge?.color),
+          color: theme.scaffoldBackgroundColor,
+          onSelected: (String value) {
+            switch (value) {
+              case 'Home':
+                _scrollToSection(_homeKey);
+                break;
+              case 'Projects':
+                _scrollToSection(_projectsKey);
+                break;
+              case 'Contacts':
+                _scrollToSection(_contactsKey);
+                break;
+            }
+          },
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<String>(
+              value: 'Home',
+              child:
+                  Text('Home', style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+            ),
+            PopupMenuItem<String>(
+              value: 'Projects',
+              child: Text('Projects',
+                  style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+            ),
+            PopupMenuItem<String>(
+              value: 'Contacts',
+              child: Text('Contacts',
+                  style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildNavItem(String title, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
+  Widget _buildThemeToggle() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return IconButton(
+          icon: Icon(
+            themeProvider.isDarkMode ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined,
+            color: Theme.of(context).iconTheme.color,
           ),
-        ),
-      ),
+          onPressed: () {
+            themeProvider.toggleTheme();
+          },
+          tooltip:
+              themeProvider.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+        );
+      },
+    );
+  }
+
+  Widget _buildNavItem(String title, VoidCallback onTap) {
+    return HoverableNavItem(
+      title: title,
+      onTap: onTap,
     );
   }
 
@@ -180,132 +213,194 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+class HoverableNavItem extends StatefulWidget {
+  final String title;
+  final VoidCallback onTap;
+
+  const HoverableNavItem({
+    super.key,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  State<HoverableNavItem> createState() => _HoverableNavItemState();
+}
+
+class _HoverableNavItemState extends State<HoverableNavItem> {
+  bool isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            widget.title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: theme.textTheme.bodyLarge?.color,
+              decoration: isHovered ? TextDecoration.underline : TextDecoration.none,
+              decorationColor: Colors.redAccent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class HeroSection extends StatelessWidget {
   const HeroSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 768;
+    final theme = Theme.of(context);
 
-    return Padding(
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      child: Flex(
-        direction: isMobile ? Axis.vertical : Axis.horizontal,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            flex: isMobile ? 1 : 2,
-            child: Column(
-              crossAxisAlignment:
-                  isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Olá, Eu sou o Eri,\nDesenvolvedor Flutter e FlutterFlow',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: isMobile ? 24 : 32,
-                      ),
-                  textAlign: isMobile ? TextAlign.center : TextAlign.left,
-                ),
-                SizedBox(height: isMobile ? 16 : 20),
-                Text(
-                  'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. '
-                  'Velit officia consequat duis enim velit mollit. '
-                  'Exercitation veniam consequat sunt nostrud amet.',
-                  style: TextStyle(
-                    fontSize: isMobile ? 14 : 16,
-                    height: 1.5,
-                  ),
-                  textAlign: isMobile ? TextAlign.center : TextAlign.left,
-                ),
-                SizedBox(height: isMobile ? 24 : 30),
-                SizedBox(
-                  width: isMobile ? double.infinity : null,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Downloading resume...')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 24 : 20, vertical: isMobile ? 16 : 10),
-                      minimumSize: Size(isMobile ? double.infinity : 0, 50),
-                    ),
-                    child: const Text(
-                      'Baixar currículo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    Widget textContent = Column(
+      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Olá, Eu sou o Eri,\nDesenvolvedor Flutter e FlutterFlow',
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: isMobile ? 24 : 32,
+            color: theme.textTheme.bodyLarge?.color,
           ),
-          SizedBox(
-            width: isMobile ? 0 : 40,
-            height: isMobile ? 40 : 0,
+          textAlign: isMobile ? TextAlign.center : TextAlign.left,
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. '
+          'Velit officia consequat duis enim velit mollit. '
+          'Exercitation veniam consequat sunt nostrud amet.',
+          style: TextStyle(
+            fontSize: isMobile ? 14 : 16,
+            height: 1.5,
+            color: theme.textTheme.bodyMedium?.color,
           ),
-          Flexible(
-            flex: isMobile ? 0 : 1,
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: isMobile ? 200 : 243,
-                maxHeight: isMobile ? 200 : 243,
+          textAlign: isMobile ? TextAlign.center : TextAlign.left,
+        ),
+        const SizedBox(height: 30),
+        SizedBox(
+          width: isMobile ? double.infinity : 200,
+          child: ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Downloading resume...',
+                    style: TextStyle(color: theme.scaffoldBackgroundColor),
+                  ),
+                  backgroundColor: theme.textTheme.bodyLarge?.color,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.headerButton,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 15,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(isMobile ? 100 : 121.5),
-                child: Image.asset(
-                  'assets/images/img_ellipse_1.png',
-                  width: isMobile ? 200 : 243,
-                  height: isMobile ? 200 : 243,
-                  fit: BoxFit.cover,
-                ),
+            ),
+            child: Text(
+              'Baixar currículo',
+              style: TextStyle(
+                color: theme.scaffoldBackgroundColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+
+    Widget imageContent = ClipRRect(
+      borderRadius: BorderRadius.circular(121.5),
+      child: Image.asset(
+        'assets/images/img_ellipse_1.png',
+        width: 243,
+        height: 243,
+        fit: BoxFit.cover,
       ),
+    );
+
+    if (isMobile) {
+      return Column(
+        children: [
+          textContent,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          flex: 2,
+          child: textContent,
+        ),
+        const SizedBox(width: 60),
+        Expanded(
+          flex: 1,
+          child: imageContent,
+        ),
+      ],
     );
   }
 }
 
-// Placeholder sections for demonstration
 class WorkSection extends StatelessWidget {
   const WorkSection({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(40),
+      constraints: const BoxConstraints(
+        minHeight: 300,
+      ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Projects',
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Here are some of my recent projects and work samples.',
-            style: TextStyle(fontSize: 16),
+            style: TextStyle(
+              fontSize: 16,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-          // Add your project widgets here
           Container(
             height: 200,
+            width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: theme.dividerColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Center(
-              child: Text('Project Showcase Area'),
+            child: Center(
+              child: Text(
+                'Project Showcase Area',
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+              ),
             ),
           ),
         ],
@@ -319,32 +414,43 @@ class ContactSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(40),
+      constraints: const BoxConstraints(
+        minHeight: 300,
+      ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Contact Me',
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Let\'s get in touch and discuss your next project.',
-            style: TextStyle(fontSize: 16),
+            style: TextStyle(
+              fontSize: 16,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-          // Add your contact form or information here
           Container(
             height: 200,
+            width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.blue[50],
+              color: theme.dividerColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Center(
-              child: Text('Contact Form Area'),
+            child: Center(
+              child: Text(
+                'Contact Form Area',
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+              ),
             ),
           ),
         ],
